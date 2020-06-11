@@ -1,0 +1,96 @@
+plugins {
+    id "net.ltgt.apt-eclipse" version "0.21"
+    id "groovy"
+    id "com.github.johnrengelman.shadow" version "5.2.0"
+    id "application"
+}
+
+version "0.1"
+group "com.hamza3202"
+
+
+repositories {
+    jcenter()
+    maven { url "https://oss.jfrog.org/oss-snapshot-local" }
+}
+
+configurations {
+    // for dependencies that are needed for development only
+    developmentOnly
+}
+
+dependencies {
+    annotationProcessor(enforcedPlatform("io.micronaut:micronaut-bom:$micronautVersion"))
+    annotationProcessor("io.micronaut:micronaut-inject-java")
+    annotationProcessor("io.micronaut:micronaut-validation")
+    //tag::micronaut-graal[]
+    annotationProcessor "io.micronaut:micronaut-graal"
+    //end::micronaut-graal[]
+    compileOnly(enforcedPlatform("io.micronaut:micronaut-bom:$micronautVersion"))
+
+    //tag::svm[]
+    compileOnly("org.graalvm.nativeimage:svm")
+    //end::svm[]
+    implementation(enforcedPlatform("io.micronaut:micronaut-bom:$micronautVersion"))
+    implementation("io.micronaut:micronaut-inject")
+    implementation("io.micronaut:micronaut-validation")
+    implementation("io.micronaut:micronaut-runtime")
+    implementation("io.micronaut:micronaut-http-server-netty")
+    implementation("io.micronaut:micronaut-http-client")
+
+    //tag::securitydependency[]
+    annotationProcessor "io.micronaut.security:micronaut-security-annotations:2.0.0.M3"
+    implementation "io.micronaut.security:micronaut-security-jwt:2.0.0.M3"
+    //end::securitydependency[]
+
+    //tag::micronautdata[]
+    annotationProcessor("io.micronaut.data:micronaut-data-processor") // <1>
+    implementation("io.micronaut.data:micronaut-data-jdbc") // <2>
+    runtime("com.h2database:h2") // <3>
+    runtime("io.micronaut.sql:micronaut-jdbc-hikari:2.3.0") // <4>
+    //end::micronautdata[]
+
+    runtimeOnly("ch.qos.logback:logback-classic:1.2.3")
+    testImplementation(enforcedPlatform("io.micronaut:micronaut-bom:$micronautVersion"))
+    testImplementation("io.micronaut:micronaut-inject-groovy")
+    testImplementation("org.spockframework:spock-core") {
+        exclude group: "org.codehaus.groovy", module: "groovy-all"
+    }
+    testImplementation("io.micronaut.test:micronaut-test-spock")
+}
+
+test.classpath += configurations.developmentOnly
+
+mainClassName = "com.hamza3202.Application"
+
+// use JUnit 5 platform
+test {
+    useJUnitPlatform()
+}
+
+java {
+    sourceCompatibility = JavaVersion.toVersion('1.8')
+    targetCompatibility = JavaVersion.toVersion('1.8')
+}
+
+tasks.withType(JavaCompile){
+    options.encoding = "UTF-8"
+    options.compilerArgs.addAll([
+            '-parameters',
+            // enables incremental compilation
+            '-Amicronaut.processing.incremental=true',
+            '-Amicronaut.processing.annotations=com.hamza3202.*'
+    ])
+}
+
+shadowJar {
+    mergeServiceFiles()
+}
+
+tasks.withType(JavaExec) {
+    classpath += configurations.developmentOnly
+    jvmArgs('-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote')
+}
+
+
+
