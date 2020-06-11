@@ -1,0 +1,16 @@
+micronaut:
+  security:
+    authentication: bearer
+    token:
+      jwt:
+        signatures:
+          secret:
+            generator:
+              secret: keepThisSecretSafeAsItIsVeryImportant
+app:
+  client:
+    omdb:
+      apiKey: ADD_YOUR_API_KEY
+auth:
+  username: myUser
+  password: myPass@134
